@@ -32,3 +32,20 @@ docker run -itp 8000:8000 5173:5173
 
 ## Endpoints 
 ![image](https://github.com/user-attachments/assets/a94b1112-55f0-4003-9410-baa7455ff26a)
+
+
+
+
+## Building the Engine Docker Container
+
+build the container
+```
+docker build . -t engine
+```
+
+run the container
+
+```
+docker run -itd -p 8000:8000 --env-file ../../.env --name Engine engine
+```
+
