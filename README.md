@@ -1,7 +1,7 @@
 <div align="center">
 
   
-<img src="lumen.png" width="250px"/>
+<img src="docs/lumen.png" width="250px"/>
 
   
 # SecureX - lumen
@@ -10,4 +10,4 @@
 
 </div> 
 
-<img src="lumenmap.png" />
+<img src="docs/lumenmap.png" />

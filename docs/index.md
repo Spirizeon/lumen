@@ -11,10 +11,10 @@ hero:
     alt: 'product logo'
   actions:
     - theme: brand
-      text: Installation
+      text: Client Demo
       link: /docs_01.md
     - theme: alt
-      text: Docs
+      text: Docker Version
       link: /docs_02.md
 
 features:
