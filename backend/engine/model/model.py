@@ -148,14 +148,6 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
 
         return base64_encoded
 
-    def encode_to_base64(self, content: bytes) -> str:
-        """Convert bytes to base64 string."""
-        try:
-            return base64.b64encode(content).decode('utf-8')
-        except Exception as e:
-            print(f"Error encoding to base64: {e}")
-            return ""
-
     async def analyze_malware_files(self, c_files: List[str], output_dir: str = "output") -> None:
         """Main analysis workflow generating base64 output files."""
         try:
