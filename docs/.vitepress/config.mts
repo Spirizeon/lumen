@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Segfault Squad",
   description: "Advanced Ai-based Malware Analysis as a Service",
-	base: "/",
+	base: "/lumen/",
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
