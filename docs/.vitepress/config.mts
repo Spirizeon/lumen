@@ -10,7 +10,6 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Docs', link: '/docs_02.md' },
       { text: 'Source', link: 'https://github.com/spirizeon/lumen' },
     ],
 		footer: {
