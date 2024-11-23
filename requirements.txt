@@ -1,4 +1,7 @@
 aiofiles==24.1.0
+fastapi==0.115.5
 langchain==0.3.7
 langchain_google_genai==2.0.5
 protobuf==5.28.3
+pydantic==2.10.1
+uvicorn==0.32.1
