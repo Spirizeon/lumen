@@ -8,7 +8,6 @@ from langchain.schema import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 from fpdf import FPDF
 import base64
-from datetime import datetime
 import io
 
 load_dotenv()
@@ -19,7 +18,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # Initialize the LLM
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-pro",
-    temperature=0.3,
+    temperature=0,
     max_tokens=2048,
     timeout=None,
     max_retries=2,
@@ -29,46 +28,33 @@ llm = ChatGoogleGenerativeAI(
 SYSTEM_PROMPT = """You are an expert in analyzing C files for security vulnerabilities.
 Focus on identifying potential risks, malicious behaviors, and security issues in the code."""
 
-class ReportPDF(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'Malware Analysis Report', 0, 1, 'C')
-        self.cell(0, 10, f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 0, 1, 'C')
-        self.ln(10)
-        
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
-
 class MalwareAnalyzer:
     def __init__(self):
         self.llm = llm
     
     async def read_file(self, file_path: str) -> str:
         """Safely read a file's contents."""
-        if not os.path.exists(file_path):
-            print(f"Warning: File not found: {file_path}")
-            return f"[File not found: {file_path}]"
-            
         try:
             async with aiofiles.open(file_path, mode="r") as f:
                 return await f.read()
         except Exception as e:
             print(f"Error reading file {file_path}: {e}")
-            return f"[Error reading {file_path}: {str(e)}]"
+            return ""
 
-    async def analyze_c_file(self, c_file_path: str) -> dict:
-        """Analyze a single C file."""
+    async def analyze_c_file(self, c_file_path: str, strings_data: str) -> str:
+        """Analyze a single C file with associated strings data."""
         print(f"Processing C file: {c_file_path}")
         
         try:
             source_code = await self.read_file(c_file_path)
             
-            analysis_prompt = f"""Analyze this C file for security risks:
+            analysis_prompt = f"""Analyze this C file and strings for security risks:
                 
 C File ({c_file_path}):
 {source_code}
+
+Extracted Strings:
+{strings_data}
 
 Provide a detailed analysis of potential vulnerabilities and malicious behaviors."""
             
@@ -78,36 +64,35 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
             ]
             
             response = await asyncio.to_thread(self.llm.invoke, messages)
-            
-            return {
-                "analysis": response.content,
-                "filename": os.path.basename(c_file_path)
-            }
+            return response.content
             
         except Exception as e:
             print(f"Error analyzing file {c_file_path}: {e}")
-            return {
-                "analysis": f"Error analyzing {c_file_path}: {str(e)}",
-                "filename": os.path.basename(c_file_path)
-            }
+            return f"Error analyzing {c_file_path}: {str(e)}"
 
-    async def summarize_analyses(self, analyses: List[dict]) -> str:
+    async def summarize_analyses(self, descriptions: List[str]) -> str:
         """Create a final summary of all analyses."""
         print("Generating final summary...")
         
-        summary_content = "Individual File Analyses:\n\n"
+        # Join descriptions with double newlines without using escape characters
+        joined_descriptions = ""
+        for i, desc in enumerate(descriptions):
+            joined_descriptions += desc
+            if i < len(descriptions) - 1:  # Don't add newlines after the last description
+                joined_descriptions += "\n\n"
         
-        for analysis in analyses:
-            summary_content += f"""File: {analysis['filename']}
+        summary_content = f"""Synthesize these individual file analyses into a comprehensive malware report:
+
+Individual Analyses:
 ================================================================================
-{analysis['analysis']}
+{joined_descriptions}
 ================================================================================
 
-"""
+Provide a detailed summary that highlights the most significant findings and overall assessment."""
         
         summary_prompt = [
             SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=summary_content + "\nProvide a detailed summary that highlights the most significant findings and overall assessment.")
+            HumanMessage(content=summary_content)
         ]
         
         try:
@@ -148,17 +133,23 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
 
         return base64_encoded
 
-    async def analyze_malware_files(self, c_files: List[str], output_dir: str = "output") -> None:
-        """Main analysis workflow generating base64 output files."""
+    async def analyze_malware_files(self, c_files: List[str], strings_file: str):
+        """Main analysis workflow."""
         try:
-            # Create output directory if it doesn't exist
-            os.makedirs(output_dir, exist_ok=True)
+            # Read strings file
+            strings_data = await self.read_file(strings_file)
             
             # Analyze all C files concurrently
-            analyses = await asyncio.gather(*[self.analyze_c_file(c_file) for c_file in c_files])
+            analysis_tasks = [
+                self.analyze_c_file(c_file, strings_data)
+                for c_file in c_files
+            ]
+            
+            # Wait for all analyses to complete
+            individual_analyses = await asyncio.gather(*analysis_tasks)
             
             # Generate final summary
-            final_summary = await self.summarize_analyses(analyses)
+            final_summary = await self.summarize_analyses(individual_analyses)
             
             # Save the report
             b64_string = self.genarate_pdf(final_summary)
@@ -167,20 +158,14 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
             
         except Exception as e:
             print(f"Error in analysis workflow: {e}")
-            return None
+            return f"Error in analysis workflow: {str(e)}"
 
 async def main():
-    # Example C files to analyze
-    c_files = [
-        "c_files/exploit_copy_2.c",
-        "c_files/exploit_copy.c"
-    ]
-    
-    # Output directory for base64 files
-    output_dir = "output"
+    c_files = ["c_files/exploit_copy_2.c", "c_files/exploit_copy.c"]
+    strings_file = "strings/strings_exploit.txt"
     
     analyzer = MalwareAnalyzer()
-    await analyzer.analyze_malware_files(c_files, output_dir)
+    await analyzer.analyze_malware_files(c_files, strings_file)
 
 if __name__ == "__main__":
     asyncio.run(main())
