@@ -1,0 +1,28 @@
+
+body {
+    position: relative; /* Ensure positioning context for the pseudo-element */
+    height: auto; /* Allow body height to adjust based on content */
+    margin: 0; /* Remove default margin */
+}
+
+body::before {
+    content: '';
+    position: absolute; /* Use absolute positioning */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('../../lumenbg.jpeg'); /* Path to your image */
+    background-size: auto; /* Maintain original size of the image */
+    background-position: center top; /* Center horizontally and align top */
+    background-repeat: repeat-y; /* Repeat only vertically */
+    opacity: 0.2; /* Adjust this value for desired opacity (0.0 to 1.0) */
+    z-index: -1; /* Places it behind other content */
+}
+
+.content {
+    position: relative; /* Ensure content is above the background */
+    z-index: 1; /* Ensure content is above the pseudo-element */
+    padding: 20px; /* Add some padding for better readability */
+}
+
