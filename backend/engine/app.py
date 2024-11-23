@@ -11,7 +11,7 @@ from datetime import datetime
 from uuid import uuid4
 import aiofiles
 import logging
-from model_1 import MalwareAnalyzer  # Import your existing analyzer
+from model.model import MalwareAnalyzer  # Import your existing analyzer
 
 app = FastAPI(
     title="Malware Analysis API",

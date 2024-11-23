@@ -1,4 +1,3 @@
-from langchain.prompts import ChatPromptTemplate
 import asyncio
 import aiofiles
 from typing import List
@@ -7,6 +6,9 @@ import os
 import google.generativeai as genai
 from langchain.schema import SystemMessage, HumanMessage
 from dotenv import load_dotenv
+from fpdf import FPDF
+import base64
+import io
 
 load_dotenv()
 
@@ -100,14 +102,36 @@ Provide a detailed summary that highlights the most significant findings and ove
             print(f"Error generating summary: {e}")
             return f"Error generating summary: {str(e)}"
 
-    def save_report(self, content: str, filename: str = "final_report.txt"):
-        """Save the analysis report to a file."""
-        try:
-            with open(filename, "w") as f:
-                f.write(content)
-            print(f"Report saved successfully to {filename}")
-        except Exception as e:
-            print(f"Error saving report: {e}")
+    # def save_report(self, content: str, filename: str = "final_report.txt"):
+    #     """Save the analysis report to a file."""
+    #     try:
+    #         with open(filename, "w") as f:
+    #             f.write(content)
+    #         print(f"Report saved successfully to {filename}")
+    #     except Exception as e:
+    #         print(f"Error saving report: {e}")
+
+    def genarate_pdf(self,content:str):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        # pdf.cell(200, 10, txt=content, ln=True, align='C')
+        pdf.multi_cell(190, 10, txt=content)
+
+        # Save PDF to a temporary file
+        pdf_file_path = "temp.pdf"
+        txt_file_path = "temp.txt"
+        pdf.output(pdf_file_path)
+
+        # Read and encode the PDF to Base64
+        with open(pdf_file_path, "rb") as pdf_file:
+            base64_encoded = base64.b64encode(pdf_file.read()).decode('utf-8')
+
+        os.remove(pdf_file_path)
+        # with open(txt_file_path, "w") as txt_file:
+        #     txt_file.write(base64_encoded)
+
+        return base64_encoded
 
     async def analyze_malware_files(self, c_files: List[str], strings_file: str):
         """Main analysis workflow."""
@@ -128,9 +152,9 @@ Provide a detailed summary that highlights the most significant findings and ove
             final_summary = await self.summarize_analyses(individual_analyses)
             
             # Save the report
-            self.save_report(final_summary)
-            
-            return final_summary
+            b64_string = self.genarate_pdf(final_summary)
+
+            return b64_string
             
         except Exception as e:
             print(f"Error in analysis workflow: {e}")
