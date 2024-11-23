@@ -1,4 +1,3 @@
-from langchain.prompts import ChatPromptTemplate
 import asyncio
 import aiofiles
 from typing import List
@@ -118,41 +117,36 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
             print(f"Error generating summary: {e}")
             return f"Error generating summary: {str(e)}"
 
-    def generate_pdf_report(self, content: str, analyses: List[dict]) -> bytes:
-        """Generate a PDF report and return it as bytes."""
-        try:
-            # Create PDF object
-            pdf = ReportPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            
-            # Add a page
-            pdf.add_page()
-            
-            # Set font for content
-            pdf.set_font('Arial', '', 11)
-            
-            # Add summary
-            pdf.set_font('Arial', 'B', 12)
-            pdf.cell(0, 10, 'Executive Summary', 0, 1, 'L')
-            pdf.set_font('Arial', '', 11)
-            pdf.multi_cell(0, 10, content)
-            pdf.ln(10)
-            
-            # Add individual analyses
-            for analysis in analyses:
-                pdf.add_page()
-                pdf.set_font('Arial', 'B', 12)
-                pdf.cell(0, 10, f"Analysis of {analysis['filename']}", 0, 1, 'L')
-                pdf.set_font('Arial', '', 11)
-                pdf.multi_cell(0, 10, analysis['analysis'])
-                pdf.ln(10)
-            
-            # Return PDF as bytes
-            return pdf.output(dest='S').encode('latin-1')
-            
-        except Exception as e:
-            print(f"Error generating PDF: {e}")
-            return b""
+    # def save_report(self, content: str, filename: str = "final_report.txt"):
+    #     """Save the analysis report to a file."""
+    #     try:
+    #         with open(filename, "w") as f:
+    #             f.write(content)
+    #         print(f"Report saved successfully to {filename}")
+    #     except Exception as e:
+    #         print(f"Error saving report: {e}")
+
+    def genarate_pdf(self,content:str):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        # pdf.cell(200, 10, txt=content, ln=True, align='C')
+        pdf.multi_cell(190, 10, txt=content)
+
+        # Save PDF to a temporary file
+        pdf_file_path = "temp.pdf"
+        txt_file_path = "temp.txt"
+        pdf.output(pdf_file_path)
+
+        # Read and encode the PDF to Base64
+        with open(pdf_file_path, "rb") as pdf_file:
+            base64_encoded = base64.b64encode(pdf_file.read()).decode('utf-8')
+
+        os.remove(pdf_file_path)
+        # with open(txt_file_path, "w") as txt_file:
+        #     txt_file.write(base64_encoded)
+
+        return base64_encoded
 
     def encode_to_base64(self, content: bytes) -> str:
         """Convert bytes to base64 string."""
@@ -174,30 +168,10 @@ Provide a detailed analysis of potential vulnerabilities and malicious behaviors
             # Generate final summary
             final_summary = await self.summarize_analyses(analyses)
             
-            # Generate and save outputs in base64
-            
-            # 1. Save summary
-            summary_base64 = self.encode_to_base64(final_summary.encode('utf-8'))
-            summary_path = os.path.join(output_dir, "summary.b64")
-            with open(summary_path, 'wb') as f:
-                f.write(base64.b64decode(summary_base64))
-            print(f"Summary saved in base64: {summary_path}")
-            
-            # 2. Save PDF report
-            pdf_bytes = self.generate_pdf_report(final_summary, analyses)
-            pdf_base64 = self.encode_to_base64(pdf_bytes)
-            pdf_path = os.path.join(output_dir, "report.b64")
-            with open(pdf_path, 'wb') as f:
-                f.write(base64.b64decode(pdf_base64))
-            print(f"PDF report saved in base64: {pdf_path}")
-            
-            # 3. Save individual analyses
-            # for analysis in analyses:
-            #     analysis_base64 = self.encode_to_base64(analysis['analysis'].encode('utf-8'))
-            #     analysis_path = os.path.join(output_dir, f"{analysis['filename']}.analysis.b64")
-            #     with open(analysis_path, 'wb') as f:
-            #         f.write(base64.b64decode(analysis_base64))
-            #     print(f"Analysis saved in base64: {analysis_path}")
+            # Save the report
+            b64_string = self.genarate_pdf(final_summary)
+
+            return b64_string
             
         except Exception as e:
             print(f"Error in analysis workflow: {e}")
