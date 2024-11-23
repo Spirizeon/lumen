@@ -1,4 +1,4 @@
-# Adamantium Client
+# Lumen Client
 
 ## Setup
 
