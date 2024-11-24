@@ -7,7 +7,7 @@ hero:
   text: "Ai-fuelled malware threat intelligence"
   tagline: Advanced Ai-based Malware Analysis as a Service (Ai-MaaS)
   image: 
-    src: 'https://i.ibb.co/XpRgDpr/lumen.png'
+    src: 'https://i.imgur.com/slcHG8X.png'
     alt: 'product logo'
   actions:
     - theme: brand
